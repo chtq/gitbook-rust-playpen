@@ -49,7 +49,7 @@ function initEditor() {
   resetButton = document.getElementById("reset-code");
   runButton = document.getElementById("run-code");
   resultDiv = document.getElementById("result");
-
+  var va = runButton.value
   if (editorDiv === null)
     return; // No editor on this page
 
@@ -59,24 +59,54 @@ function initEditor() {
 
   var executeCode = function(ev) {
     resultDiv.style.display = "block";
-    resultDiv.innerHTML = "Running...";
+    resultDiv.innerHTML = "";
 
     // Clear previous markers, if any
     markers.map(function(id) { editor.getSession().removeMarker(id); });
+    
 
-    // Get the code, run the program
-    var program = editor.getValue();
+        var url = window.location.pathname;
+	var fname = url.substring(0, url.lastIndexOf('.'));
 
-  //  alert(program);
- //  console.log("here");
-     var ws = new WebSocket('ws://192.168.0.253:3368');
-     ws.onopen = function(){console.log("send");
-        ws.send(program);};
-     ws.onmessage = function(result){console.log(result.data);resultDiv.innerHTML=result.data;}
-     ws.onclose=function(evt){console.log("close");};
-     ws.onerror=function(evt){console.log("error");};
-//    runProgram(program, handleResult);
-  };
+	console.log(window.location.search);
+	name = getparam("username");
+	email = getparam("email");
+
+	if(name!='')
+	    {
+		//var mydata = 'xz' + fname + '-' + name + ';;;' + answer;
+		//console.log(mydata);
+		var senddata={ "url":url,
+                               "protocol":window.location.protocol,
+                               "allurl":window.location.host,
+			       "username":name,
+			       "email":email,
+			       "answer":editor.getValue()
+                             };
+		var ws = new WebSocket('ws://192.168.0.253:3368');
+		ws.onopen = function(){
+		  console.log("send");
+		  ws.send(JSON.stringify(senddata));
+		};
+		ws.onmessage = function(result){console.log(result.data);}
+		ws.onclose=function(evt){console.log("close");};
+		ws.onerror=function(evt){console.log("error");};
+	   }
+
+	// Get the code, run the program
+	// var program = va + "-"+ name+ ";;;"+ editor.getValue();
+
+
+	//   alert(name);
+	//  console.log("here");
+	//   var ws = new WebSocket('ws://192.168.0.253:3368');
+	//   ws.onopen = function(){console.log("send");
+	//      ws.send(program);};
+	//   ws.onmessage = function(result){console.log(result.data);resultDiv.innerHTML=result.data;}
+	//   ws.onclose=function(evt){console.log("close");};
+	//   ws.onerror=function(evt){console.log("error");};
+	//    runProgram(program, handleResult);
+};
 
   ace.config.setModuleUrl('ace/mode/rust', '/gitbook/plugins/gitbook-plugin-rust-playpen/mode-rust.js');
 
@@ -129,6 +159,15 @@ require(["gitbook"], function(gitbook) {
     initEditor();
   })
 });
+
+function getparam(argv_name){
+
+     var reg = new RegExp("(^|&)" + argv_name + "=([^&]*)(&|$)","i");
+     var r = window.location.search.substr(1).match(reg);
+     if (r!=null) return unescape(r[2]);
+     return null;
+
+   };
 
 // Changes the height of the editor to match its contents
 function updateEditorHeight() {
